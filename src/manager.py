@@ -69,3 +69,43 @@ class Manager:
             total_bills_pln=rachunki,
             total_due_pln=bilans
         )
+    
+    def generate_tenant_settlements(self, apartment_key: str, year: int, month: int):
+        from src.models import TenantSettlement
+        
+        if apartment_key not in self.apartments:
+            return []
+            
+        rachunki = self.get_apartment_costs(apartment_key, year, month)
+        if rachunki is None:
+            rachunki = 0.0
+            
+        apt_tenants = []
+        for key, tenant in self.tenants.items():
+            if tenant.apartment == apartment_key:
+                apt_tenants.append((key, tenant))
+                
+        if len(apt_tenants) == 0:
+            return []
+            
+        rachunki_na_osobe = rachunki / len(apt_tenants)
+        
+        rozliczenia = []
+        for key, tenant in apt_tenants:
+            rent = tenant.rent_pln
+            total_due = rent + rachunki_na_osobe
+            balance = 0.0 - total_due 
+            
+            s = TenantSettlement(
+                tenant=key,
+                apartment_settlement=apartment_key,
+                month=month,
+                year=year,
+                rent_pln=rent,
+                bills_pln=rachunki_na_osobe,
+                total_due_pln=total_due,
+                balance_pln=balance
+            )
+            rozliczenia.append(s)
+            
+        return rozliczenia

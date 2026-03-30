@@ -91,3 +91,38 @@ def test_apartment_settlement_tdd():
         assert settlement_empty.year == 1999            
         assert settlement_empty.total_bills_pln == 0.0
         assert settlement_empty.total_due_pln == settlement_empty.total_rent_pln
+
+def test_tenant_settlements_tdd():
+    from src.models import Parameters, Apartment, Tenant, Bill
+    from src.manager import Manager
+    
+    manager = Manager(Parameters())
+
+    manager.apartments['APT_0'] = Apartment(key='APT_0', name='Test', location='Test', area_m2=50.0, rooms={})
+    manager.apartments['APT_1'] = Apartment(key='APT_1', name='Test', location='Test', area_m2=50.0, rooms={})
+    manager.apartments['APT_2'] = Apartment(key='APT_2', name='Test', location='Test', area_m2=50.0, rooms={})
+
+    manager.tenants['T_1'] = Tenant(name='Jan', apartment='APT_1', room='R1', rent_pln=1000.0, deposit_pln=0.0, date_agreement_from='', date_agreement_to='')
+    manager.tenants['T_2A'] = Tenant(name='Anna', apartment='APT_2', room='R1', rent_pln=800.0, deposit_pln=0.0, date_agreement_from='', date_agreement_to='')
+    manager.tenants['T_2B'] = Tenant(name='Piotr', apartment='APT_2', room='R2', rent_pln=900.0, deposit_pln=0.0, date_agreement_from='', date_agreement_to='')
+
+    manager.bills.append(Bill(amount_pln=200.0, date_due='2026-04-10', apartment='APT_1', settlement_year=2026, settlement_month=4, type='prad'))
+    manager.bills.append(Bill(amount_pln=300.0, date_due='2026-04-10', apartment='APT_2', settlement_year=2026, settlement_month=4, type='prad'))
+
+
+    wynik_0 = manager.generate_tenant_settlements('APT_0', 2026, 4)
+    assert isinstance(wynik_0, list)
+    assert len(wynik_0) == 0        
+
+    wynik_1 = manager.generate_tenant_settlements('APT_1', 2026, 4)
+    assert len(wynik_1) == 1         
+    assert wynik_1[0].tenant == 'T_1'
+    assert wynik_1[0].bills_pln == 200.0 
+    assert wynik_1[0].total_due_pln == 1200.0
+
+
+    wynik_2 = manager.generate_tenant_settlements('APT_2', 2026, 4)
+    assert len(wynik_2) == 2         
+    assert wynik_2[0].bills_pln == 150.0 
+    assert wynik_2[1].bills_pln == 150.0 
+    assert wynik_2[0].month == 4        
