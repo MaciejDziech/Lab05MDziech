@@ -65,3 +65,29 @@ def test_apartment_costs_with_optional_parameters():
 
     costs = manager.get_apartment_costs('apart-polanka')
     assert costs == 3532.0
+
+def test_apartment_settlement_tdd():
+    from src.models import Parameters
+    from src.manager import Manager
+    
+    params = Parameters()
+    manager = Manager(params)
+    
+    settlement = manager.generate_apartment_settlement('apart-polanka', 2026, 4)
+    
+    if settlement:
+        assert settlement.apartment == 'apart-polanka'
+        assert settlement.year == 2026                  
+        assert settlement.month == 4                    
+        assert settlement.total_bills_pln >= 0.0        
+        assert settlement.total_rent_pln >= 0.0         
+        assert settlement.total_due_pln == settlement.total_rent_pln - settlement.total_bills_pln  
+
+    assert manager.generate_apartment_settlement('WIDMO_MIESZKANIE', 2026, 4) is None
+
+    settlement_empty = manager.generate_apartment_settlement('apart-polanka', 1999, 1)
+    
+    if settlement_empty:
+        assert settlement_empty.year == 1999            
+        assert settlement_empty.total_bills_pln == 0.0
+        assert settlement_empty.total_due_pln == settlement_empty.total_rent_pln

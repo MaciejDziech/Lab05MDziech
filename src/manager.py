@@ -43,3 +43,29 @@ class Manager:
                         suma += bill.amount_pln
                         
         return suma
+
+    def generate_apartment_settlement(self, apartment_key: str, year: int, month: int):
+        from src.models import ApartmentSettlement 
+        
+        if apartment_key not in self.apartments:
+            return None
+            
+        rachunki = self.get_apartment_costs(apartment_key, year, month)
+        if rachunki is None:
+            rachunki = 0.0
+        
+        czynsze = 0.0
+        for tenant in self.tenants.values():
+            if tenant.apartment == apartment_key:
+                czynsze += tenant.rent_pln
+                
+        bilans = czynsze - rachunki
+        
+        return ApartmentSettlement(
+            apartment=apartment_key,
+            month=month,
+            year=year,
+            total_rent_pln=czynsze,
+            total_bills_pln=rachunki,
+            total_due_pln=bilans
+        )
